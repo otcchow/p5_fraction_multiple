@@ -2,7 +2,9 @@
 <html lang="zh-Hant-HK">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>整數乘分數極速挑戰 | 3分鐘數學MC遊戲</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,19 +19,31 @@
       --bg-gradient-end: #e0e7ff;
     }
 
-    body {
+    html, body {
+      height: 100dvh;
+      width: 100%;
+      margin: 0;
+      padding: 0;
       font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
       background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-      min-height: 100vh;
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    /* 遊戲進行中鎖定全螢幕高度並防止 iPad Safari 意外捲動 */
+    body.in-game-lock {
+      overflow: hidden;
+      overscroll-behavior: none;
     }
 
     .font-math {
       font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
     }
 
-    /* 教科書式上下堆疊分數樣式 */
+    /* 教科書式上下堆疊分數樣式（支援 iPad 響應式縮放） */
     .math-expr {
       display: inline-flex;
       align-items: center;
@@ -43,7 +57,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.16em;
+      gap: 0.18em;
       vertical-align: middle;
     }
 
@@ -74,9 +88,25 @@
       width: 100%;
     }
 
-    /* 題目區較粗的分數線 */
+    /* 題目區較粗的分數線與 iPad 遠距清晰字體 */
+    .problem-display {
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
+    }
+
+    .problem-display .fraction {
+      font-size: clamp(1.75rem, 4vw, 2.85rem);
+    }
+
     .problem-display .fraction .num {
       border-bottom-width: 3.5px;
+    }
+
+    .option-math-display {
+      font-size: clamp(1.65rem, 3.4vw, 2.35rem);
+    }
+
+    .option-math-display .fraction {
+      font-size: clamp(1.25rem, 2.6vw, 1.8rem);
     }
 
     /* 動畫效果 */
@@ -132,16 +162,21 @@
       animation: pulseUrgent 0.8s infinite ease-in-out;
     }
 
-    /* 選項按鈕互動狀態 */
+    /* iPad 觸控選項按鈕互動狀態 */
     .mc-btn {
-      transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.1s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
     }
 
     .mc-btn:active:not(:disabled) {
-      transform: scale(0.97);
+      transform: scale(0.96);
     }
 
     /* 自訂捲軸（錯題檢討區） */
+    .custom-scrollbar {
+      -webkit-overflow-scrolling: touch;
+    }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
     }
@@ -155,15 +190,15 @@
     }
   </style>
 </head>
-<body class="text-slate-800 flex items-center justify-center p-3 sm:p-6">
+<body class="text-slate-800 flex items-center justify-center p-3 sm:p-5 md:p-6">
 
   <!-- 主容器 -->
-  <main class="w-full max-w-3xl mx-auto">
+  <main class="w-full max-w-4xl mx-auto h-full flex flex-col justify-center">
 
     <!-- ==================== 1. 開始畫面 ==================== -->
-    <section id="start-screen" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-10 text-center animate-pop-in">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-sm mb-5 border border-indigo-100">
-        <span>⚡ 國小高年級數學特訓</span>
+    <section id="start-screen" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-9 text-center animate-pop-in my-auto">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-sm mb-4 border border-indigo-100">
+        <span>📱 iPad 觸控優化版</span>
         <span>•</span>
         <span>選擇題模式</span>
       </div>
@@ -171,18 +206,18 @@
       <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-3">
         整數乘分數<span class="text-indigo-600">極速挑戰</span>
       </h1>
-      <p class="text-slate-500 text-base sm:text-lg max-w-xl mx-auto mb-8">
+      <p class="text-slate-500 text-base sm:text-lg max-w-xl mx-auto mb-6 sm:mb-7">
         訓練快速約分與計算能力！答案須化為<strong class="text-slate-700">最簡分數</strong>（或帶分數／整數）。
       </p>
 
       <!-- 規則卡片 -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto mb-6 sm:mb-7">
         <div class="bg-sky-50/80 border border-sky-100 rounded-2xl p-4 flex flex-col items-center">
           <div class="w-11 h-11 rounded-xl bg-sky-500 text-white flex items-center justify-center font-black text-xl mb-2 shadow-sm">
             ⏱️
           </div>
           <div class="font-bold text-slate-800 text-lg">限時 3 分鐘</div>
-          <div class="text-xs sm:text-sm text-slate-500 mt-0.5">共 180 秒倒數計時</div>
+          <div class="text-xs sm:text-sm text-slate-500 mt-0.5">整數 ≤ 15，帶分數 ≤ 5</div>
         </div>
 
         <div class="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex flex-col items-center">
@@ -203,7 +238,7 @@
       </div>
 
       <!-- 範例展示 -->
-      <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 max-w-md mx-auto mb-8">
+      <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 max-w-md mx-auto mb-7">
         <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">題型範例</div>
         <div class="text-2xl sm:text-3xl font-math text-slate-800 flex items-center justify-center gap-3">
           <span>6</span>
@@ -225,21 +260,21 @@
 
       <!-- 開始按鈕 -->
       <button id="start-btn" type="button"
-        class="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-black text-xl sm:text-2xl rounded-2xl shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+        class="w-full sm:w-auto px-12 py-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 active:scale-95 text-white font-black text-xl sm:text-2xl rounded-2xl shadow-lg shadow-indigo-600/30 transition-all cursor-pointer">
         🚀 開始挑戰
       </button>
 
       <div class="mt-4 text-xs text-slate-400">
-        支援滑鼠點擊、觸控螢幕，或鍵盤 <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600 font-mono">A B C D</kbd> / <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600 font-mono">1 2 3 4</kbd> 快速作答
+        支援 iPad / 平板大按鈕觸控，或外接鍵盤 <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600 font-mono">A B C D</kbd> / <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600 font-mono">1 2 3 4</kbd>
       </div>
     </section>
 
-    <!-- ==================== 2. 遊戲進行畫面 ==================== -->
-    <section id="game-screen" class="hidden space-y-4 sm:space-y-5">
+    <!-- ==================== 2. 遊戲進行畫面 (iPad 100dvh 滿版零捲動) ==================== -->
+    <section id="game-screen" class="hidden h-full max-h-[860px] flex flex-col justify-between gap-2.5 sm:gap-4 py-1 sm:py-2">
       <!-- 頂部狀態列 HUD -->
-      <div class="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-md border border-white/80 p-3.5 sm:p-5 flex items-center justify-between gap-2 relative">
+      <div class="shrink-0 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-md border border-white/80 p-3 sm:p-4 flex items-center justify-between gap-2 relative">
         <!-- 剩餘時間 -->
-        <div id="timer-box" class="relative flex items-center gap-2.5 sm:gap-3 bg-slate-100 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl transition-colors">
+        <div id="timer-box" class="relative flex items-center gap-2.5 sm:gap-3 bg-slate-100 px-3.5 sm:px-5 py-2 rounded-2xl transition-colors">
           <span class="text-xl sm:text-2xl">⏱️</span>
           <div>
             <div class="text-[11px] sm:text-xs font-bold text-slate-500 leading-none mb-0.5">剩餘時間</div>
@@ -257,92 +292,57 @@
           <span id="streak-text">連對 0 題</span>
         </div>
 
-        <!-- 當前得分 -->
-        <div id="score-box" class="relative flex items-center gap-2.5 sm:gap-3 bg-indigo-50 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl border border-indigo-100">
-          <span class="text-xl sm:text-2xl">🏆</span>
-          <div class="text-right">
-            <div class="text-[11px] sm:text-xs font-bold text-indigo-500 leading-none mb-0.5">目前得分</div>
-            <div id="score-display" class="font-math text-2xl sm:text-3xl font-extrabold text-indigo-700 leading-none">
-              0
+        <!-- 右側：音效開關 + 當前得分 -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <button id="sound-toggle-btn" type="button" aria-label="切換音效"
+            class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center text-xl transition-all cursor-pointer">
+            🔊
+          </button>
+
+          <div id="score-box" class="relative flex items-center gap-2.5 sm:gap-3 bg-indigo-50 px-3.5 sm:px-5 py-2 rounded-2xl border border-indigo-100">
+            <span class="text-xl sm:text-2xl">🏆</span>
+            <div class="text-right">
+              <div class="text-[11px] sm:text-xs font-bold text-indigo-500 leading-none mb-0.5">目前得分</div>
+              <div id="score-display" class="font-math text-2xl sm:text-3xl font-extrabold text-indigo-700 leading-none">
+                0
+              </div>
             </div>
+            <div id="bonus-anchor" class="absolute -bottom-3 left-2"></div>
           </div>
-          <div id="bonus-anchor" class="absolute -bottom-3 left-2"></div>
         </div>
       </div>
 
       <!-- 進度條（時間視覺化） -->
-      <div class="w-full h-2 bg-white/70 rounded-full overflow-hidden shadow-inner">
+      <div class="shrink-0 w-full h-2 bg-white/70 rounded-full overflow-hidden shadow-inner">
         <div id="time-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-sky-400 transition-all duration-300" style="width: 100%;"></div>
       </div>
 
-      <!-- 題目卡片區 -->
-      <div id="question-card" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-10 text-center relative overflow-hidden">
-        <div class="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-400 mb-4">
+      <!-- 題目卡片區（彈性佔據上半空間） -->
+      <div id="question-card" class="flex-1 min-h-0 bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-4 sm:p-7 flex flex-col justify-between text-center relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-400">
           <span id="question-counter" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full">第 1 題</span>
           <span class="text-slate-400">請選出最簡答案</span>
         </div>
 
         <!-- 算式主體 -->
-        <div id="problem-container" class="problem-display min-h-[110px] sm:min-h-[140px] flex items-center justify-center my-2 sm:my-4 text-4xl sm:text-6xl font-math text-slate-900">
+        <div id="problem-container" class="problem-display flex-1 flex items-center justify-center my-1 font-math text-slate-900">
           <!-- JS 動態插入題目 -->
         </div>
 
         <!-- 即時回饋橫幅 -->
-        <div id="feedback-banner" class="h-7 flex items-center justify-center text-sm sm:text-base font-bold opacity-0 transition-opacity duration-150">
+        <div id="feedback-banner" class="h-6 sm:h-7 flex items-center justify-center text-sm sm:text-base font-bold opacity-0 transition-opacity duration-150">
           <!-- JS 動態更新 -->
         </div>
       </div>
 
-      <!-- 4選1 MC 選項網格 -->
-      <div id="options-grid" class="grid grid-cols-2 gap-3 sm:gap-4">
+      <!-- 4選1 MC 選項網格（iPad 專用手感大按鈕） -->
+      <div id="options-grid" class="shrink-0 grid grid-cols-2 gap-3 sm:gap-4">
         <!-- JS 動態產生 4 個大按鈕 -->
       </div>
     </section>
 
     <!-- ==================== 3. 結算畫面 ==================== -->
-    <section id="end-screen" class="hidden bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-10 text-center animate-pop-in">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-3">
-        <span>⏰ 時間到！挑戰結束</span>
-      </div>
-
-      <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-2">成績結算</h2>
-      <p id="end-comment" class="text-slate-500 text-base sm:text-lg mb-6">表現不錯，繼續保持！</p>
-
-      <!-- 核心數據卡片 -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
-        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
-          <div class="text-xs font-bold text-indigo-500 mb-1">最終得分</div>
-          <div id="final-score" class="font-math text-3xl sm:text-4xl font-black text-indigo-700">0</div>
-        </div>
-
-        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
-          <div class="text-xs font-bold text-emerald-600 mb-1">答對題數</div>
-          <div id="final-correct" class="font-math text-3xl sm:text-4xl font-black text-emerald-700">0</div>
-        </div>
-
-        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4">
-          <div class="text-xs font-bold text-rose-500 mb-1">答錯題數</div>
-          <div id="final-wrong" class="font-math text-3xl sm:text-4xl font-black text-rose-600">0</div>
-        </div>
-
-        <div class="bg-sky-50 border border-sky-100 rounded-2xl p-4">
-          <div class="text-xs font-bold text-sky-600 mb-1">準確率</div>
-          <div id="final-accuracy" class="font-math text-3xl sm:text-4xl font-black text-sky-700">0%</div>
-        </div>
-      </div>
-
-      <!-- 錯題回顧區 -->
-      <div id="review-section" class="hidden text-left mb-8">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
-            <span>📝 錯題檢討</span>
-            <span id="wrong-count-badge" class="text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-bold">0 題</span>
-          </h3>
-          <span class="text-xs text-slate-400">記得先約分再相乘喔！</span>
-        </div>
-
-        <div id="wrong-list" class="max-h-64 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
-          <!-- JS 動態插入錯題紀錄 -->
+    <section id="end-screen" class="hidden bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-9 text-center animate-pop-in my-auto max-h-[94dvh] overflow-y-auto custom-scrollbar">
         </div>
       </div>
 
@@ -392,6 +392,7 @@
       wrongCount: 0,
       currentQuestion: null,
       isTransitioning: false,
+      soundEnabled: true,
       wrongHistory: [] // 儲存 { questionHtml, userChoiceHtml, correctChoiceHtml }
     };
 
@@ -403,6 +404,7 @@
       startBtn: document.getElementById('start-btn'),
       restartBtn: document.getElementById('restart-btn'),
       homeBtn: document.getElementById('home-btn'),
+      soundToggleBtn: document.getElementById('sound-toggle-btn'),
 
       timerBox: document.getElementById('timer-box'),
       timerDisplay: document.getElementById('timer-display'),
@@ -435,6 +437,7 @@
     let audioCtx = null;
 
     function playTone(type) {
+      if (!state.soundEnabled) return;
       try {
         if (!audioCtx) {
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -579,131 +582,176 @@
 
     /**
      * 生成一道「整數 × 分數」或「分數 × 整數」題目及 4 個 MC 選項
+     * 嚴格數值限制：
+     * 1. 乘數整數：2 ~ 15（唔大過 15）
+     * 2. 題目中的分數（真分數或帶分數）以及所有 4 個選項中的帶分數：整數部分皆 <= 5（帶分數唔大過 5）
      */
     function generateQuestion() {
-      // 1. 決定分母 (2 ~ 12)
-      const den = randInt(2, 12);
+      const MAX_INTEGER = 15;
+      const MAX_MIXED_WHOLE = 5;
 
-      // 2. 決定分子 (1 ~ den - 1)，確保是最簡真分數，偶爾出現帶分數題型 (約 20% 機率)
-      let fracWhole = 0;
-      let num = 1;
-      const isMixedQuestion = Math.random() < 0.2 && den <= 8;
+      let attempt = 0;
+      while (attempt < 150) {
+        attempt++;
 
-      if (isMixedQuestion) {
-        fracWhole = randInt(1, 2);
-      }
+        // 1. 決定分母 (2 ~ 12)
+        const den = randInt(2, 12);
 
-      // 確保分子與分母互質，讓題目本身是標準最簡分數
-      const coprimes = [];
-      for (let n = 1; n < den; n++) {
-        if (gcd(n, den) === 1) coprimes.push(n);
-      }
-      num = coprimes[randInt(0, coprimes.length - 1)];
-
-      // 3. 決定整數 (2 ~ 18)，有較高機率能與分母產生公因數（訓練約分技巧！）
-      let integer;
-      if (Math.random() < 0.72) {
-        // 挑選一個與 den 有共同因數或為倍數的整數
-        const factors = [];
-        for (let k = 2; k <= 18; k++) {
-          if (gcd(k, den) > 1) factors.push(k);
+        // 2. 決定題目分數：真分數（80%）或帶分數（20%，整數部分 1 ~ 3 以確保乘積合理）
+        let fracWhole = 0;
+        const isMixedQuestion = Math.random() < 0.22 && den <= 8;
+        if (isMixedQuestion) {
+          fracWhole = randInt(1, 3);
         }
-        integer = factors.length > 0 ? factors[randInt(0, factors.length - 1)] : randInt(2, 16);
-      } else {
-        integer = randInt(2, 15);
-      }
 
-      // 計算正確答案
-      const improperNum = fracWhole * den + num;
-      const ansRawNum = integer * improperNum;
-      const ansRawDen = den;
-      const correctAns = simplifyFraction(ansRawNum, ansRawDen);
-
-      // 隨機決定排列順序：整數 × 分數 或 分數 × 整數
-      const integerFirst = Math.random() < 0.5;
-      const fracDisplayObj = { whole: fracWhole, num: num, den: den };
-
-      const integerHtml = `<span class="whole-part">${integer}</span>`;
-      const fractionHtml = renderFractionHTML(fracDisplayObj, 'text-3xl sm:text-4xl');
-
-      const questionHtml = integerFirst
-        ? `<span class="math-expr">${integerHtml}<span class="text-indigo-500 font-bold">×</span>${fractionHtml}</span>`
-        : `<span class="math-expr">${fractionHtml}<span class="text-indigo-500 font-bold">×</span>${integerHtml}</span>`;
-
-      // 生成 3 個具代表性的學生常見錯誤干擾選項
-      const distractors = [];
-      const usedKeys = new Set([correctAns.key]);
-
-      function tryAddDistractor(obj) {
-        if (!obj) return false;
-        // 避免數值與正確答案完全相同（例如未約分但數值相等時，只在沒有其他更佳選項或作為特定干擾時使用，這裡允許未約分形式作為干擾項以測驗約分能力！）
-        if (obj.whole === correctAns.whole && obj.num === correctAns.num && obj.den === correctAns.den) {
-          return false;
+        // 確保分子與分母互質，讓題目本身是最簡分數
+        const coprimes = [];
+        for (let n = 1; n < den; n++) {
+          if (gcd(n, den) === 1) coprimes.push(n);
         }
-        if (obj.whole < 0 || obj.num < 0 || obj.den <= 0) return false;
-        if (usedKeys.has(obj.key)) return false;
+        const num = coprimes[randInt(0, coprimes.length - 1)];
 
-        usedKeys.add(obj.key);
-        distractors.push(obj);
-        return true;
+        // 3. 決定整數 (2 ~ 15)，且讓計算結果的帶分數整數部分不超過 5
+        // 計算最大允許整數，使 (integer * (fracWhole * den + num)) / den < 6（即帶分數整數部分 <= 5）
+        const improperNum = fracWhole * den + num;
+        const maxAllowedInt = Math.min(MAX_INTEGER, Math.floor((MAX_MIXED_WHOLE * den + (den - 1)) / improperNum));
+
+        if (maxAllowedInt < 2) continue;
+
+        let integer;
+        if (Math.random() < 0.72) {
+          const factors = [];
+          for (let k = 2; k <= maxAllowedInt; k++) {
+            if (gcd(k, den) > 1) factors.push(k);
+          }
+          integer = factors.length > 0 ? factors[randInt(0, factors.length - 1)] : randInt(2, maxAllowedInt);
+        } else {
+          integer = randInt(2, maxAllowedInt);
+        }
+
+        // 計算正確答案並檢查是否符合「帶分數整數部分 <= 5」
+        const ansRawNum = integer * improperNum;
+        const ansRawDen = den;
+        const correctAns = simplifyFraction(ansRawNum, ansRawDen);
+
+        // 若答案為帶分數（num > 0），其整數部分不得大於 5
+        if (correctAns.num > 0 && correctAns.whole > MAX_MIXED_WHOLE) {
+          continue;
+        }
+        // 若答案為純整數，也控制在合理範圍內
+        if (correctAns.num === 0 && correctAns.whole > MAX_INTEGER) {
+          continue;
+        }
+
+        // 隨機決定排列順序：整數 × 分數 或 分數 × 整數
+        const integerFirst = Math.random() < 0.5;
+        const fracDisplayObj = { whole: fracWhole, num: num, den: den };
+
+        const integerHtml = `<span class="whole-part">${integer}</span>`;
+        const fractionHtml = renderFractionHTML(fracDisplayObj);
+
+        const questionHtml = integerFirst
+          ? `<span class="math-expr">${integerHtml}<span class="text-indigo-500 font-bold">×</span>${fractionHtml}</span>`
+          : `<span class="math-expr">${fractionHtml}<span class="text-indigo-500 font-bold">×</span>${integerHtml}</span>`;
+
+        // 生成 3 個具代表性的學生常見錯誤干擾選項（同時嚴格遵守帶分數整數部分 <= 5）
+        const distractors = [];
+        const usedKeys = new Set([correctAns.key]);
+
+        function tryAddDistractor(obj) {
+          if (!obj) return false;
+          // 排除與正確答案數值完全相同且已化簡的選項
+          if (obj.whole === correctAns.whole && obj.num === correctAns.num && obj.den === correctAns.den) {
+            return false;
+          }
+          if (obj.whole < 0 || obj.num < 0 || obj.den <= 0) return false;
+          // 嚴格限制：所有干擾選項若為帶分數，整數部分同樣不得超過 5；若為純整數不得超過 15
+          if (obj.num > 0 && obj.whole > MAX_MIXED_WHOLE) return false;
+          if (obj.num === 0 && obj.whole > MAX_INTEGER) return false;
+          if (usedKeys.has(obj.key)) return false;
+
+          usedKeys.add(obj.key);
+          distractors.push(obj);
+          return true;
+        }
+
+        // 錯誤類型 A：誤將整數乘以分母
+        tryAddDistractor(simplifyFraction(improperNum, integer * den));
+
+        // 錯誤類型 B：未約分直接寫成帶分數或假分數（若原本可約分且整數部分 <= 5）
+        if (gcd(ansRawNum, ansRawDen) > 1) {
+          tryAddDistractor(unsimplifiedFraction(ansRawNum, ansRawDen));
+        }
+
+        // 錯誤類型 C：整數直接當作帶分數的整數部分（僅當 integer <= 5 時才加入，符合帶分數 <= 5 規則）
+        if (fracWhole === 0 && integer <= MAX_MIXED_WHOLE && integer !== correctAns.whole) {
+          tryAddDistractor({
+            whole: integer,
+            num: num,
+            den: den,
+            key: `${integer}|${num}/${den}`
+          });
+        }
+
+        // 錯誤類型 D：分子計算差 1 或多乘/少乘
+        tryAddDistractor(simplifyFraction(ansRawNum + 1, ansRawDen));
+        if (ansRawNum > 1) {
+          tryAddDistractor(simplifyFraction(ansRawNum - 1, ansRawDen));
+        }
+
+        // 錯誤類型 E：整數加減錯
+        if (integer + 1 <= MAX_INTEGER) {
+          tryAddDistractor(simplifyFraction((integer + 1) * improperNum, ansRawDen));
+        }
+        if (integer > 2) {
+          tryAddDistractor(simplifyFraction((integer - 1) * improperNum, ansRawDen));
+        }
+
+        // 補足至 3 個干擾選項（保底邏輯，確保全部符合 <= 5 限制）
+        let safetyCounter = 0;
+        while (distractors.length < 3 && safetyCounter < 60) {
+          safetyCounter++;
+          const offset = randInt(-4, 5);
+          if (offset === 0) continue;
+          const candidateNum = Math.max(1, ansRawNum + offset);
+          tryAddDistractor(simplifyFraction(candidateNum, ansRawDen));
+        }
+
+        // 若因極端條件未能湊滿 3 個合法干擾項，重新生成題目
+        if (distractors.length < 3) {
+          continue;
+        }
+
+        // 組合 4 個選項並洗牌
+        const allChoices = [
+          { ...correctAns, isCorrect: true },
+          ...distractors.slice(0, 3).map(d => ({ ...d, isCorrect: false }))
+        ];
+
+        // Fisher-Yates 洗牌演算法
+        for (let i = allChoices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allChoices[i], allChoices[j]] = [allChoices[j], allChoices[i]];
+        }
+
+        return {
+          questionHtml,
+          correctAns,
+          choices: allChoices
+        };
       }
 
-      // 錯誤類型 A：誤將整數乘以分母（常見迷思：integer / (improperNum * den)）
-      tryAddDistractor(simplifyFraction(improperNum, integer * den));
-
-      // 錯誤類型 B：未約分直接寫成帶分數或假分數（若原本可約分）
-      if (gcd(ansRawNum, ansRawDen) > 1) {
-        tryAddDistractor(unsimplifiedFraction(ansRawNum, ansRawDen));
-      }
-
-      // 錯誤類型 C：整數直接當作帶分數的整數部分（誤把 6 × 3/4 當成 6又3/4）
-      if (fracWhole === 0 && integer !== correctAns.whole) {
-        tryAddDistractor({
-          whole: integer,
-          num: num,
-          den: den,
-          key: `${integer}|${num}/${den}`
-        });
-      }
-
-      // 錯誤類型 D：分子計算差 1 或多乘/少乘
-      tryAddDistractor(simplifyFraction(ansRawNum + 1, ansRawDen));
-      if (ansRawNum > 1) {
-        tryAddDistractor(simplifyFraction(ansRawNum - 1, ansRawDen));
-      }
-
-      // 錯誤類型 E：分母加減錯或整數加減錯
-      tryAddDistractor(simplifyFraction((integer + 1) * improperNum, ansRawDen));
-      if (integer > 2) {
-        tryAddDistractor(simplifyFraction((integer - 1) * improperNum, ansRawDen));
-      }
-
-      // 補足至 3 個干擾選項（保底邏輯）
-      let safetyCounter = 0;
-      while (distractors.length < 3 && safetyCounter < 40) {
-        safetyCounter++;
-        const offset = randInt(-4, 5);
-        if (offset === 0) continue;
-        const candidateNum = Math.max(1, ansRawNum + offset);
-        tryAddDistractor(simplifyFraction(candidateNum, ansRawDen));
-      }
-
-      // 組合 4 個選項並洗牌
-      const allChoices = [
-        { ...correctAns, isCorrect: true },
-        ...distractors.slice(0, 3).map(d => ({ ...d, isCorrect: false }))
-      ];
-
-      // Fisher-Yates 洗牌演算法
-      for (let i = allChoices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [allChoices[i], allChoices[j]] = [allChoices[j], allChoices[i]];
-      }
-
+      // 絕對保底題目（4 × 3/8 = 1 1/2）
+      const fallbackCorrect = simplifyFraction(12, 8);
       return {
-        questionHtml,
-        correctAns,
-        choices: allChoices
+        questionHtml: `<span class="math-expr"><span class="whole-part">4</span><span class="text-indigo-500 font-bold">×</span>${renderFractionHTML({ whole: 0, num: 3, den: 8 })}</span>`,
+        correctAns: fallbackCorrect,
+        choices: [
+          { ...fallbackCorrect, isCorrect: true },
+          { ...simplifyFraction(3, 32), isCorrect: false },
+          { ...unsimplifiedFraction(12, 8), isCorrect: false },
+          { ...simplifyFraction(4, 2), isCorrect: false }
+        ]
       };
     }
 
@@ -772,18 +820,18 @@
       els.feedbackBanner.style.opacity = '0';
       els.feedbackBanner.textContent = '';
 
-      // 渲染 4 個 MC 按鈕
+      // 渲染 4 個 MC 按鈕（iPad 大觸控熱區，最小高度 92px ~ 116px）
       const labels = ['A', 'B', 'C', 'D'];
       els.optionsGrid.innerHTML = state.currentQuestion.choices
         .map((choice, idx) => {
-          const choiceHtml = renderFractionHTML(choice, 'text-xl sm:text-2xl');
+          const choiceHtml = renderFractionHTML(choice, '');
           return `
             <button type="button" data-index="${idx}"
-              class="mc-btn group relative bg-white hover:bg-indigo-50/70 border-2 border-slate-200 hover:border-indigo-400 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md flex items-center justify-center min-h-[88px] sm:min-h-[108px] cursor-pointer">
-              <span class="absolute top-2.5 left-3 w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-500 font-math font-bold text-sm flex items-center justify-center transition-colors">
+              class="mc-btn group relative bg-white hover:bg-indigo-50/70 border-2 border-slate-200 hover:border-indigo-400 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md flex items-center justify-center min-h-[92px] sm:min-h-[116px] cursor-pointer">
+              <span class="absolute top-3 left-3.5 w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-500 font-math font-bold text-sm sm:text-base flex items-center justify-center transition-colors">
                 ${labels[idx]}
               </span>
-              <div class="font-math text-2xl sm:text-3xl text-slate-800 pl-4">
+              <div class="option-math-display font-math text-slate-800 pl-4">
                 ${choiceHtml}
               </div>
             </button>
@@ -895,8 +943,8 @@
       state.wrongCount = 0;
       state.wrongHistory = [];
       state.isTransitioning = false;
-
-      // 切換畫面
+      // 切換畫面並鎖定 iPad 視窗捲動
+      document.body.classList.add('in-game-lock');
       els.startScreen.classList.add('hidden');
       els.endScreen.classList.add('hidden');
       els.gameScreen.classList.remove('hidden');
@@ -921,6 +969,7 @@
       if (!state.isPlaying) return;
       state.isPlaying = false;
       clearInterval(state.timerInterval);
+      document.body.classList.remove('in-game-lock');
       playTone('end');
 
       // 計算統計數據
@@ -990,15 +1039,32 @@
     function returnHome() {
       clearInterval(state.timerInterval);
       state.isPlaying = false;
+      document.body.classList.remove('in-game-lock');
       els.gameScreen.classList.add('hidden');
       els.endScreen.classList.add('hidden');
       els.startScreen.classList.remove('hidden');
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      els.soundToggleBtn.textContent = state.soundEnabled ? '🔊' : '🔇';
     }
 
     // ==================== 事件監聽 ====================
     els.startBtn.addEventListener('click', startGame);
     els.restartBtn.addEventListener('click', startGame);
     els.homeBtn.addEventListener('click', returnHome);
+    els.soundToggleBtn.addEventListener('click', toggleSound);
+
+    // 防止 iPad Safari 雙擊放大手勢
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, { passive: false });
 
     // 鍵盤快捷鍵支援 (1-4 或 A-D)
     document.addEventListener('keydown', (e) => {
