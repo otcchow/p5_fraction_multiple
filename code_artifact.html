@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>整數乘分數極速挑戰 | 3分鐘數學MC遊戲</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans TC & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-gradient-start: #f0f9ff;
+      --bg-gradient-end: #e0e7ff;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+      min-height: 100vh;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .font-math {
+      font-family: 'JetBrains Mono', 'Noto Sans TC', monospace;
+    }
+
+    /* 教科書式上下堆疊分數樣式 */
+    .math-expr {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45em;
+      vertical-align: middle;
+      line-height: 1.1;
+    }
+
+    .mixed-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.16em;
+      vertical-align: middle;
+    }
+
+    .whole-part {
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      vertical-align: middle;
+      text-align: center;
+      font-weight: 700;
+      line-height: 1.05;
+    }
+
+    .fraction .num {
+      padding: 0 0.28em 0.1em 0.28em;
+      border-bottom: 2.5px solid currentColor;
+      width: 100%;
+    }
+
+    .fraction .den {
+      padding: 0.12em 0.28em 0 0.28em;
+      width: 100%;
+    }
+
+    /* 題目區較粗的分數線 */
+    .problem-display .fraction .num {
+      border-bottom-width: 3.5px;
+    }
+
+    /* 動畫效果 */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+
+    .animate-shake {
+      animation: shake 0.35s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes floatPenalty {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.9);
+      }
+      40% {
+        opacity: 1;
+        transform: translateY(-16px) scale(1.15);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-34px) scale(1);
+      }
+    }
+
+    .floating-badge {
+      position: absolute;
+      pointer-events: none;
+      animation: floatPenalty 0.85s ease-out forwards;
+      z-index: 50;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .animate-pop-in {
+      animation: popIn 0.22s ease-out forwards;
+    }
+
+    @keyframes pulseUrgent {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    .timer-urgent {
+      animation: pulseUrgent 0.8s infinite ease-in-out;
+    }
+
+    /* 選項按鈕互動狀態 */
+    .mc-btn {
+      transition: transform 0.12s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .mc-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    /* 自訂捲軸（錯題檢討區） */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="text-slate-800 flex items-center justify-center p-3 sm:p-6">
+
+  <!-- 主容器 -->
+  <main class="w-full max-w-3xl mx-auto">
+
+    <!-- ==================== 1. 開始畫面 ==================== -->
+    <section id="start-screen" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-10 text-center animate-pop-in">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-sm mb-5 border border-indigo-100">
+        <span>⚡ 國小高年級數學特訓</span>
+        <span>•</span>
+        <span>選擇題模式</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight mb-3">
+        整數乘分數<span class="text-indigo-600">極速挑戰</span>
+      </h1>
+      <p class="text-slate-500 text-base sm:text-lg max-w-xl mx-auto mb-8">
+        訓練快速約分與計算能力！答案須化為<strong class="text-slate-700">最簡分數</strong>（或帶分數／整數）。
+      </p>
+
+      <!-- 規則卡片 -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto mb-8">
+        <div class="bg-sky-50/80 border border-sky-100 rounded-2xl p-4 flex flex-col items-center">
+          <div class="w-11 h-11 rounded-xl bg-sky-500 text-white flex items-center justify-center font-black text-xl mb-2 shadow-sm">
+            ⏱️
+          </div>
+          <div class="font-bold text-slate-800 text-lg">限時 3 分鐘</div>
+          <div class="text-xs sm:text-sm text-slate-500 mt-0.5">共 180 秒倒數計時</div>
+        </div>
+
+        <div class="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-4 flex flex-col items-center">
+          <div class="w-11 h-11 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-xl mb-2 shadow-sm">
+            +1
+          </div>
+          <div class="font-bold text-emerald-800 text-lg">答對 +1 分</div>
+          <div class="text-xs sm:text-sm text-emerald-600/80 mt-0.5">累積連擊挑戰最高分</div>
+        </div>
+
+        <div class="bg-rose-50/80 border border-rose-100 rounded-2xl p-4 flex flex-col items-center">
+          <div class="w-11 h-11 rounded-xl bg-rose-500 text-white flex items-center justify-center font-black text-xl mb-2 shadow-sm">
+            -3s
+          </div>
+          <div class="font-bold text-rose-800 text-lg">答錯扣 3 秒</div>
+          <div class="text-xs sm:text-sm text-rose-600/80 mt-0.5">看清楚約分再出手！</div>
+        </div>
+      </div>
+
+      <!-- 範例展示 -->
+      <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 max-w-md mx-auto mb-8">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">題型範例</div>
+        <div class="text-2xl sm:text-3xl font-math text-slate-800 flex items-center justify-center gap-3">
+          <span>6</span>
+          <span class="text-indigo-500">×</span>
+          <span class="fraction text-xl sm:text-2xl">
+            <span class="num">3</span>
+            <span class="den">4</span>
+          </span>
+          <span class="text-slate-400">=</span>
+          <span class="mixed-number text-emerald-600">
+            <span class="whole-part">4</span>
+            <span class="fraction text-xl sm:text-2xl">
+              <span class="num">1</span>
+              <span class="den">2</span>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <!-- 開始按鈕 -->
+      <button id="start-btn" type="button"
+        class="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-black text-xl sm:text-2xl rounded-2xl shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+        🚀 開始挑戰
+      </button>
+
+      <div class="mt-4 text-xs text-slate-400">
+        支援滑鼠點擊、觸控螢幕，或鍵盤 <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600 font-mono">A B C D</kbd> / <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded text-slate-600 font-mono">1 2 3 4</kbd> 快速作答
+      </div>
+    </section>
+
+    <!-- ==================== 2. 遊戲進行畫面 ==================== -->
+    <section id="game-screen" class="hidden space-y-4 sm:space-y-5">
+      <!-- 頂部狀態列 HUD -->
+      <div class="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-md border border-white/80 p-3.5 sm:p-5 flex items-center justify-between gap-2 relative">
+        <!-- 剩餘時間 -->
+        <div id="timer-box" class="relative flex items-center gap-2.5 sm:gap-3 bg-slate-100 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl transition-colors">
+          <span class="text-xl sm:text-2xl">⏱️</span>
+          <div>
+            <div class="text-[11px] sm:text-xs font-bold text-slate-500 leading-none mb-0.5">剩餘時間</div>
+            <div id="timer-display" class="font-math text-2xl sm:text-3xl font-extrabold text-slate-800 leading-none tracking-tight">
+              03:00
+            </div>
+          </div>
+          <!-- 扣秒浮動提示容器 -->
+          <div id="penalty-anchor" class="absolute -bottom-3 right-2"></div>
+        </div>
+
+        <!-- 連擊指示器 -->
+        <div id="streak-badge" class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 font-bold text-sm transition-all">
+          <span>🔥</span>
+          <span id="streak-text">連對 0 題</span>
+        </div>
+
+        <!-- 當前得分 -->
+        <div id="score-box" class="relative flex items-center gap-2.5 sm:gap-3 bg-indigo-50 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-2xl border border-indigo-100">
+          <span class="text-xl sm:text-2xl">🏆</span>
+          <div class="text-right">
+            <div class="text-[11px] sm:text-xs font-bold text-indigo-500 leading-none mb-0.5">目前得分</div>
+            <div id="score-display" class="font-math text-2xl sm:text-3xl font-extrabold text-indigo-700 leading-none">
+              0
+            </div>
+          </div>
+          <div id="bonus-anchor" class="absolute -bottom-3 left-2"></div>
+        </div>
+      </div>
+
+      <!-- 進度條（時間視覺化） -->
+      <div class="w-full h-2 bg-white/70 rounded-full overflow-hidden shadow-inner">
+        <div id="time-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-sky-400 transition-all duration-300" style="width: 100%;"></div>
+      </div>
+
+      <!-- 題目卡片區 -->
+      <div id="question-card" class="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-10 text-center relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-400 mb-4">
+          <span id="question-counter" class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full">第 1 題</span>
+          <span class="text-slate-400">請選出最簡答案</span>
+        </div>
+
+        <!-- 算式主體 -->
+        <div id="problem-container" class="problem-display min-h-[110px] sm:min-h-[140px] flex items-center justify-center my-2 sm:my-4 text-4xl sm:text-6xl font-math text-slate-900">
+          <!-- JS 動態插入題目 -->
+        </div>
+
+        <!-- 即時回饋橫幅 -->
+        <div id="feedback-banner" class="h-7 flex items-center justify-center text-sm sm:text-base font-bold opacity-0 transition-opacity duration-150">
+          <!-- JS 動態更新 -->
+        </div>
+      </div>
+
+      <!-- 4選1 MC 選項網格 -->
+      <div id="options-grid" class="grid grid-cols-2 gap-3 sm:gap-4">
+        <!-- JS 動態產生 4 個大按鈕 -->
+      </div>
+    </section>
+
+    <!-- ==================== 3. 結算畫面 ==================== -->
+    <section id="end-screen" class="hidden bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-white/80 p-6 sm:p-10 text-center animate-pop-in">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-3">
+        <span>⏰ 時間到！挑戰結束</span>
+      </div>
+
+      <h2 class="text-3xl sm:text-4xl font-black text-slate-900 mb-2">成績結算</h2>
+      <p id="end-comment" class="text-slate-500 text-base sm:text-lg mb-6">表現不錯，繼續保持！</p>
+
+      <!-- 核心數據卡片 -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4">
+          <div class="text-xs font-bold text-indigo-500 mb-1">最終得分</div>
+          <div id="final-score" class="font-math text-3xl sm:text-4xl font-black text-indigo-700">0</div>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
+          <div class="text-xs font-bold text-emerald-600 mb-1">答對題數</div>
+          <div id="final-correct" class="font-math text-3xl sm:text-4xl font-black text-emerald-700">0</div>
+        </div>
+
+        <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4">
+          <div class="text-xs font-bold text-rose-500 mb-1">答錯題數</div>
+          <div id="final-wrong" class="font-math text-3xl sm:text-4xl font-black text-rose-600">0</div>
+        </div>
+
+        <div class="bg-sky-50 border border-sky-100 rounded-2xl p-4">
+          <div class="text-xs font-bold text-sky-600 mb-1">準確率</div>
+          <div id="final-accuracy" class="font-math text-3xl sm:text-4xl font-black text-sky-700">0%</div>
+        </div>
+      </div>
+
+      <!-- 錯題回顧區 -->
+      <div id="review-section" class="hidden text-left mb-8">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+            <span>📝 錯題檢討</span>
+            <span id="wrong-count-badge" class="text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-bold">0 題</span>
+          </h3>
+          <span class="text-xs text-slate-400">記得先約分再相乘喔！</span>
+        </div>
+
+        <div id="wrong-list" class="max-h-64 overflow-y-auto custom-scrollbar space-y-2.5 pr-1">
+          <!-- JS 動態插入錯題紀錄 -->
+        </div>
+      </div>
+
+      <!-- 全對慶祝區 -->
+      <div id="perfect-section" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-5 mb-8 text-emerald-800 font-bold">
+        🎉 太厲害了！本次挑戰完全沒有答錯任何題目！
+      </div>
+
+      <!-- 操作按鈕 -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button id="restart-btn" type="button"
+          class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-black text-lg rounded-2xl shadow-lg shadow-indigo-600/25 transition-all cursor-pointer">
+          🔄 再玩一次
+        </button>
+        <button id="home-btn" type="button"
+          class="w-full sm:w-auto px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-lg rounded-2xl transition-all cursor-pointer">
+          返回首頁
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    /**
+     * 整數乘分數極速挑戰 - 核心邏輯
+     * 規則：
+     * - 限時 180 秒 (3:00)
+     * - 答對 +1 分
+     * - 答錯 -3 秒
+     * - 4選1 MC，所有答案皆化為最簡分數（真分數、帶分數或整數）
+     */
+
+    // ==================== 狀態管理 ====================
+    const GAME_DURATION = 180; // 3 分鐘 = 180 秒
+    const PENALTY_SECONDS = 3; // 答錯扣 3 秒
+
+    const state = {
+      isPlaying: false,
+      timeLeft: GAME_DURATION,
+      timerInterval: null,
+      score: 0,
+      streak: 0,
+      maxStreak: 0,
+      questionNumber: 0,
+      correctCount: 0,
+      wrongCount: 0,
+      currentQuestion: null,
+      isTransitioning: false,
+      wrongHistory: [] // 儲存 { questionHtml, userChoiceHtml, correctChoiceHtml }
+    };
+
+    // ==================== DOM 元素快取 ====================
+    const els = {
+      startScreen: document.getElementById('start-screen'),
+      gameScreen: document.getElementById('game-screen'),
+      endScreen: document.getElementById('end-screen'),
+      startBtn: document.getElementById('start-btn'),
+      restartBtn: document.getElementById('restart-btn'),
+      homeBtn: document.getElementById('home-btn'),
+
+      timerBox: document.getElementById('timer-box'),
+      timerDisplay: document.getElementById('timer-display'),
+      timeProgressBar: document.getElementById('time-progress-bar'),
+      penaltyAnchor: document.getElementById('penalty-anchor'),
+      bonusAnchor: document.getElementById('bonus-anchor'),
+
+      scoreDisplay: document.getElementById('score-display'),
+      streakBadge: document.getElementById('streak-badge'),
+      streakText: document.getElementById('streak-text'),
+
+      questionCard: document.getElementById('question-card'),
+      questionCounter: document.getElementById('question-counter'),
+      problemContainer: document.getElementById('problem-container'),
+      feedbackBanner: document.getElementById('feedback-banner'),
+      optionsGrid: document.getElementById('options-grid'),
+
+      finalScore: document.getElementById('final-score'),
+      finalCorrect: document.getElementById('final-correct'),
+      finalWrong: document.getElementById('final-wrong'),
+      finalAccuracy: document.getElementById('final-accuracy'),
+      endComment: document.getElementById('end-comment'),
+      reviewSection: document.getElementById('review-section'),
+      wrongCountBadge: document.getElementById('wrong-count-badge'),
+      wrongList: document.getElementById('wrong-list'),
+      perfectSection: document.getElementById('perfect-section')
+    };
+
+    // ==================== 音效合成 (Web Audio API，無需外部檔案) ====================
+    let audioCtx = null;
+
+    function playTone(type) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+          // 清脆雙音上升提示
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.setValueAtTime(880, now + 0.07); // A5
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        } else if (type === 'wrong') {
+          // 低沉提示音
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.linearRampToValueAtTime(155, now + 0.22);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+          osc.start(now);
+          osc.stop(now + 0.24);
+        } else if (type === 'end') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.12);
+          osc.frequency.setValueAtTime(783.99, now + 0.24);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        }
+      } catch (e) {
+        // 忽略瀏覽器音效阻擋錯誤
+      }
+    }
+
+    // ==================== 數學與分數工具函式 ====================
+
+    /**
+     * 計算最大公因數 (GCD)
+     */
+    function gcd(a, b) {
+      a = Math.abs(Math.round(a));
+      b = Math.abs(Math.round(b));
+      while (b !== 0) {
+        const temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return a || 1;
+    }
+
+    /**
+     * 將假分數 num/den 化簡為標準結構物件
+     * 回傳格式: { whole, num, den, rawNum, rawDen, key }
+     * 其中 key 用於去重比較，例如 "4|1/2" 或 "6|0/1"
+     */
+    function simplifyFraction(rawNum, rawDen) {
+      if (rawDen === 0) rawDen = 1;
+      const g = gcd(rawNum, rawDen);
+      const simpNum = rawNum / g;
+      const simpDen = rawDen / g;
+
+      const whole = Math.floor(simpNum / simpDen);
+      const remNum = simpNum % simpDen;
+
+      return {
+        whole: whole,
+        num: remNum,
+        den: remNum === 0 ? 1 : simpDen,
+        rawNum: simpNum,
+        rawDen: simpDen,
+        key: `${whole}|${remNum}/${remNum === 0 ? 1 : simpDen}`
+      };
+    }
+
+    /**
+     * 建立未約分的分數物件（用於刻意產生「忘記約分」的干擾選項）
+     */
+    function unsimplifiedFraction(rawNum, rawDen) {
+      const whole = Math.floor(rawNum / rawDen);
+      const remNum = rawNum % rawDen;
+      return {
+        whole: whole,
+        num: remNum,
+        den: remNum === 0 ? 1 : rawDen,
+        rawNum: rawNum,
+        rawDen: rawDen,
+        key: `raw:${rawNum}/${rawDen}`
+      };
+    }
+
+    /**
+     * 將分數結構渲染為教科書式上下堆疊 HTML
+     * @param {Object} fracObj - simplifyFraction 回傳的物件
+     * @param {String} fracSizeClass - 控制分數數字大小的 Tailwind 類別
+     */
+    function renderFractionHTML(fracObj, fracSizeClass = 'text-xl sm:text-2xl') {
+      // 純整數
+      if (fracObj.num === 0) {
+        return `<span class="whole-part">${fracObj.whole}</span>`;
+      }
+
+      const fracPart = `
+        <span class="fraction ${fracSizeClass}">
+          <span class="num">${fracObj.num}</span>
+          <span class="den">${fracObj.den}</span>
+        </span>
+      `;
+
+      // 純真分數
+      if (fracObj.whole === 0) {
+        return fracPart;
+      }
+
+      // 帶分數
+      return `
+        <span class="mixed-number">
+          <span class="whole-part">${fracObj.whole}</span>
+          ${fracPart}
+        </span>
+      `;
+    }
+
+    // ==================== 題目與干擾選項生成器 ====================
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    /**
+     * 生成一道「整數 × 分數」或「分數 × 整數」題目及 4 個 MC 選項
+     */
+    function generateQuestion() {
+      // 1. 決定分母 (2 ~ 12)
+      const den = randInt(2, 12);
+
+      // 2. 決定分子 (1 ~ den - 1)，確保是最簡真分數，偶爾出現帶分數題型 (約 20% 機率)
+      let fracWhole = 0;
+      let num = 1;
+      const isMixedQuestion = Math.random() < 0.2 && den <= 8;
+
+      if (isMixedQuestion) {
+        fracWhole = randInt(1, 2);
+      }
+
+      // 確保分子與分母互質，讓題目本身是標準最簡分數
+      const coprimes = [];
+      for (let n = 1; n < den; n++) {
+        if (gcd(n, den) === 1) coprimes.push(n);
+      }
+      num = coprimes[randInt(0, coprimes.length - 1)];
+
+      // 3. 決定整數 (2 ~ 18)，有較高機率能與分母產生公因數（訓練約分技巧！）
+      let integer;
+      if (Math.random() < 0.72) {
+        // 挑選一個與 den 有共同因數或為倍數的整數
+        const factors = [];
+        for (let k = 2; k <= 18; k++) {
+          if (gcd(k, den) > 1) factors.push(k);
+        }
+        integer = factors.length > 0 ? factors[randInt(0, factors.length - 1)] : randInt(2, 16);
+      } else {
+        integer = randInt(2, 15);
+      }
+
+      // 計算正確答案
+      const improperNum = fracWhole * den + num;
+      const ansRawNum = integer * improperNum;
+      const ansRawDen = den;
+      const correctAns = simplifyFraction(ansRawNum, ansRawDen);
+
+      // 隨機決定排列順序：整數 × 分數 或 分數 × 整數
+      const integerFirst = Math.random() < 0.5;
+      const fracDisplayObj = { whole: fracWhole, num: num, den: den };
+
+      const integerHtml = `<span class="whole-part">${integer}</span>`;
+      const fractionHtml = renderFractionHTML(fracDisplayObj, 'text-3xl sm:text-4xl');
+
+      const questionHtml = integerFirst
+        ? `<span class="math-expr">${integerHtml}<span class="text-indigo-500 font-bold">×</span>${fractionHtml}</span>`
+        : `<span class="math-expr">${fractionHtml}<span class="text-indigo-500 font-bold">×</span>${integerHtml}</span>`;
+
+      // 生成 3 個具代表性的學生常見錯誤干擾選項
+      const distractors = [];
+      const usedKeys = new Set([correctAns.key]);
+
+      function tryAddDistractor(obj) {
+        if (!obj) return false;
+        // 避免數值與正確答案完全相同（例如未約分但數值相等時，只在沒有其他更佳選項或作為特定干擾時使用，這裡允許未約分形式作為干擾項以測驗約分能力！）
+        if (obj.whole === correctAns.whole && obj.num === correctAns.num && obj.den === correctAns.den) {
+          return false;
+        }
+        if (obj.whole < 0 || obj.num < 0 || obj.den <= 0) return false;
+        if (usedKeys.has(obj.key)) return false;
+
+        usedKeys.add(obj.key);
+        distractors.push(obj);
+        return true;
+      }
+
+      // 錯誤類型 A：誤將整數乘以分母（常見迷思：integer / (improperNum * den)）
+      tryAddDistractor(simplifyFraction(improperNum, integer * den));
+
+      // 錯誤類型 B：未約分直接寫成帶分數或假分數（若原本可約分）
+      if (gcd(ansRawNum, ansRawDen) > 1) {
+        tryAddDistractor(unsimplifiedFraction(ansRawNum, ansRawDen));
+      }
+
+      // 錯誤類型 C：整數直接當作帶分數的整數部分（誤把 6 × 3/4 當成 6又3/4）
+      if (fracWhole === 0 && integer !== correctAns.whole) {
+        tryAddDistractor({
+          whole: integer,
+          num: num,
+          den: den,
+          key: `${integer}|${num}/${den}`
+        });
+      }
+
+      // 錯誤類型 D：分子計算差 1 或多乘/少乘
+      tryAddDistractor(simplifyFraction(ansRawNum + 1, ansRawDen));
+      if (ansRawNum > 1) {
+        tryAddDistractor(simplifyFraction(ansRawNum - 1, ansRawDen));
+      }
+
+      // 錯誤類型 E：分母加減錯或整數加減錯
+      tryAddDistractor(simplifyFraction((integer + 1) * improperNum, ansRawDen));
+      if (integer > 2) {
+        tryAddDistractor(simplifyFraction((integer - 1) * improperNum, ansRawDen));
+      }
+
+      // 補足至 3 個干擾選項（保底邏輯）
+      let safetyCounter = 0;
+      while (distractors.length < 3 && safetyCounter < 40) {
+        safetyCounter++;
+        const offset = randInt(-4, 5);
+        if (offset === 0) continue;
+        const candidateNum = Math.max(1, ansRawNum + offset);
+        tryAddDistractor(simplifyFraction(candidateNum, ansRawDen));
+      }
+
+      // 組合 4 個選項並洗牌
+      const allChoices = [
+        { ...correctAns, isCorrect: true },
+        ...distractors.slice(0, 3).map(d => ({ ...d, isCorrect: false }))
+      ];
+
+      // Fisher-Yates 洗牌演算法
+      for (let i = allChoices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allChoices[i], allChoices[j]] = [allChoices[j], allChoices[i]];
+      }
+
+      return {
+        questionHtml,
+        correctAns,
+        choices: allChoices
+      };
+    }
+
+    // ==================== 畫面渲染與互動邏輯 ====================
+
+    function formatTime(seconds) {
+      const safeSec = Math.max(0, Math.ceil(seconds));
+      const mins = Math.floor(safeSec / 60);
+      const secs = safeSec % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function updateTimerUI() {
+      els.timerDisplay.textContent = formatTime(state.timeLeft);
+      const pct = Math.max(0, Math.min(100, (state.timeLeft / GAME_DURATION) * 100));
+      els.timeProgressBar.style.width = `${pct}%`;
+
+      if (state.timeLeft <= 15) {
+        els.timerBox.classList.remove('bg-slate-100');
+        els.timerBox.classList.add('bg-rose-100', 'text-rose-700');
+        els.timerDisplay.classList.remove('text-slate-800');
+        els.timerDisplay.classList.add('text-rose-600', 'timer-urgent');
+        els.timeProgressBar.classList.remove('from-indigo-500', 'to-sky-400');
+        els.timeProgressBar.classList.add('from-rose-500', 'to-orange-400');
+      } else {
+        els.timerBox.classList.add('bg-slate-100');
+        els.timerBox.classList.remove('bg-rose-100', 'text-rose-700');
+        els.timerDisplay.classList.add('text-slate-800');
+        els.timerDisplay.classList.remove('text-rose-600', 'timer-urgent');
+        els.timeProgressBar.classList.add('from-indigo-500', 'to-sky-400');
+        els.timeProgressBar.classList.remove('from-rose-500', 'to-orange-400');
+      }
+    }
+
+    function updateScoreUI() {
+      els.scoreDisplay.textContent = state.score;
+      if (state.streak >= 2) {
+        els.streakBadge.classList.remove('hidden');
+        els.streakText.textContent = `連對 ${state.streak} 題`;
+      } else {
+        els.streakBadge.classList.add('hidden');
+      }
+    }
+
+    function spawnFloatingBadge(anchorEl, text, colorClasses) {
+      const badge = document.createElement('div');
+      badge.className = `floating-badge font-math font-black text-base sm:text-lg px-2.5 py-0.5 rounded-full shadow-md ${colorClasses}`;
+      badge.textContent = text;
+      anchorEl.appendChild(badge);
+      setTimeout(() => {
+        badge.remove();
+      }, 850);
+    }
+
+    function renderNextQuestion() {
+      if (!state.isPlaying) return;
+
+      state.questionNumber++;
+      state.isTransitioning = false;
+      state.currentQuestion = generateQuestion();
+
+      els.questionCounter.textContent = `第 ${state.questionNumber} 題`;
+      els.problemContainer.innerHTML = state.currentQuestion.questionHtml;
+
+      // 隱藏回饋提示
+      els.feedbackBanner.style.opacity = '0';
+      els.feedbackBanner.textContent = '';
+
+      // 渲染 4 個 MC 按鈕
+      const labels = ['A', 'B', 'C', 'D'];
+      els.optionsGrid.innerHTML = state.currentQuestion.choices
+        .map((choice, idx) => {
+          const choiceHtml = renderFractionHTML(choice, 'text-xl sm:text-2xl');
+          return `
+            <button type="button" data-index="${idx}"
+              class="mc-btn group relative bg-white hover:bg-indigo-50/70 border-2 border-slate-200 hover:border-indigo-400 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm hover:shadow-md flex items-center justify-center min-h-[88px] sm:min-h-[108px] cursor-pointer">
+              <span class="absolute top-2.5 left-3 w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-500 font-math font-bold text-sm flex items-center justify-center transition-colors">
+                ${labels[idx]}
+              </span>
+              <div class="font-math text-2xl sm:text-3xl text-slate-800 pl-4">
+                ${choiceHtml}
+              </div>
+            </button>
+          `;
+        })
+        .join('');
+
+      // 綁定按鈕點擊事件
+      const buttons = els.optionsGrid.querySelectorAll('.mc-btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-index'), 10);
+          handleAnswer(idx);
+        });
+      });
+    }
+
+    function handleAnswer(selectedIndex) {
+      if (!state.isPlaying || state.isTransitioning || !state.currentQuestion) return;
+
+      const choice = state.currentQuestion.choices[selectedIndex];
+      if (!choice) return;
+
+      state.isTransitioning = true;
+      const buttons = els.optionsGrid.querySelectorAll('.mc-btn');
+      buttons.forEach(b => (b.disabled = true));
+
+      const selectedBtn = buttons[selectedIndex];
+
+      if (choice.isCorrect) {
+        // 答對：+1 分
+        state.score += 1;
+        state.correctCount += 1;
+        state.streak += 1;
+        if (state.streak > state.maxStreak) state.maxStreak = state.streak;
+
+        playTone('correct');
+        updateScoreUI();
+        spawnFloatingBadge(els.bonusAnchor, '+1 分', 'bg-emerald-500 text-white');
+
+        selectedBtn.classList.remove('border-slate-200', 'bg-white');
+        selectedBtn.classList.add('border-emerald-500', 'bg-emerald-50', 'ring-4', 'ring-emerald-500/20');
+
+        els.feedbackBanner.textContent = '✅ 答對了！+1 分';
+        els.feedbackBanner.className = 'h-7 flex items-center justify-center text-sm sm:text-base font-bold text-emerald-600 transition-opacity duration-150';
+        els.feedbackBanner.style.opacity = '1';
+
+        setTimeout(() => {
+          if (state.isPlaying) renderNextQuestion();
+        }, 280);
+      } else {
+        // 答錯：扣 3 秒
+        state.wrongCount += 1;
+        state.streak = 0;
+        state.timeLeft = Math.max(0, state.timeLeft - PENALTY_SECONDS);
+
+        playTone('wrong');
+        updateScoreUI();
+        updateTimerUI();
+        spawnFloatingBadge(els.penaltyAnchor, `-${PENALTY_SECONDS}秒`, 'bg-rose-600 text-white');
+
+        // 震動與紅色警示
+        els.questionCard.classList.remove('animate-shake');
+        void els.questionCard.offsetWidth; // 觸發 reflow 重啟動畫
+        els.questionCard.classList.add('animate-shake');
+
+        selectedBtn.classList.remove('border-slate-200', 'bg-white');
+        selectedBtn.classList.add('border-rose-500', 'bg-rose-50', 'ring-4', 'ring-rose-500/20');
+
+        // 標示正確答案讓學生一眼看懂
+        state.currentQuestion.choices.forEach((c, idx) => {
+          if (c.isCorrect && buttons[idx]) {
+            buttons[idx].classList.remove('border-slate-200', 'bg-white');
+            buttons[idx].classList.add('border-emerald-500', 'bg-emerald-50/70');
+          }
+        });
+
+        // 記錄錯題
+        state.wrongHistory.push({
+          questionHtml: state.currentQuestion.questionHtml,
+          userChoiceHtml: renderFractionHTML(choice, 'text-base sm:text-lg'),
+          correctChoiceHtml: renderFractionHTML(state.currentQuestion.correctAns, 'text-base sm:text-lg')
+        });
+
+        els.feedbackBanner.textContent = `❌ 答錯了！時間扣除 ${PENALTY_SECONDS} 秒`;
+        els.feedbackBanner.className = 'h-7 flex items-center justify-center text-sm sm:text-base font-bold text-rose-600 transition-opacity duration-150';
+        els.feedbackBanner.style.opacity = '1';
+
+        if (state.timeLeft <= 0) {
+          setTimeout(() => endGame(), 320);
+        } else {
+          setTimeout(() => {
+            if (state.isPlaying) renderNextQuestion();
+          }, 520);
+        }
+      }
+    }
+
+    function startGame() {
+      // 重設所有狀態
+      clearInterval(state.timerInterval);
+      state.isPlaying = true;
+      state.timeLeft = GAME_DURATION;
+      state.score = 0;
+      state.streak = 0;
+      state.maxStreak = 0;
+      state.questionNumber = 0;
+      state.correctCount = 0;
+      state.wrongCount = 0;
+      state.wrongHistory = [];
+      state.isTransitioning = false;
+
+      // 切換畫面
+      els.startScreen.classList.add('hidden');
+      els.endScreen.classList.add('hidden');
+      els.gameScreen.classList.remove('hidden');
+
+      updateTimerUI();
+      updateScoreUI();
+      renderNextQuestion();
+
+      // 啟動每秒倒數計時器
+      state.timerInterval = setInterval(() => {
+        if (!state.isPlaying) return;
+        state.timeLeft -= 1;
+        updateTimerUI();
+
+        if (state.timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      if (!state.isPlaying) return;
+      state.isPlaying = false;
+      clearInterval(state.timerInterval);
+      playTone('end');
+
+      // 計算統計數據
+      const totalAttempted = state.correctCount + state.wrongCount;
+      const accuracy = totalAttempted > 0 ? Math.round((state.correctCount / totalAttempted) * 100) : 0;
+
+      els.finalScore.textContent = state.score;
+      els.finalCorrect.textContent = state.correctCount;
+      els.finalWrong.textContent = state.wrongCount;
+      els.finalAccuracy.textContent = `${accuracy}%`;
+
+      // 評語
+      if (state.score >= 30) {
+        els.endComment.textContent = '神級計算速度！約分技巧已經爐火純青！';
+      } else if (state.score >= 20) {
+        els.endComment.textContent = '非常優秀！計算又快又準！';
+      } else if (state.score >= 10) {
+        els.endComment.textContent = '表現不錯！多練習約分會更快喔！';
+      } else {
+        els.endComment.textContent = '再接再厲！記住：先約分、再相乘！';
+      }
+
+      // 渲染錯題檢討列表
+      if (state.wrongHistory.length > 0) {
+        els.reviewSection.classList.remove('hidden');
+        els.perfectSection.classList.add('hidden');
+        els.wrongCountBadge.textContent = `${state.wrongHistory.length} 題`;
+
+        els.wrongList.innerHTML = state.wrongHistory
+          .map((item, idx) => `
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs font-bold flex items-center justify-center">
+                  ${idx + 1}
+                </span>
+                <div class="font-math text-lg sm:text-xl text-slate-800">
+                  ${item.questionHtml}
+                </div>
+              </div>
+              <div class="flex items-center gap-4 text-sm sm:text-base font-math">
+                <div class="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200">
+                  <span class="text-xs font-sans font-bold">你的答案:</span>
+                  <span>${item.userChoiceHtml}</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
+                  <span class="text-xs font-sans font-bold">正解:</span>
+                  <span>${item.correctChoiceHtml}</span>
+                </div>
+              </div>
+            </div>
+          `)
+          .join('');
+      } else {
+        els.reviewSection.classList.add('hidden');
+        if (totalAttempted > 0) {
+          els.perfectSection.classList.remove('hidden');
+        } else {
+          els.perfectSection.classList.add('hidden');
+        }
+      }
+
+      // 切換至結算畫面
+      els.gameScreen.classList.add('hidden');
+      els.endScreen.classList.remove('hidden');
+    }
+
+    function returnHome() {
+      clearInterval(state.timerInterval);
+      state.isPlaying = false;
+      els.gameScreen.classList.add('hidden');
+      els.endScreen.classList.add('hidden');
+      els.startScreen.classList.remove('hidden');
+    }
+
+    // ==================== 事件監聽 ====================
+    els.startBtn.addEventListener('click', startGame);
+    els.restartBtn.addEventListener('click', startGame);
+    els.homeBtn.addEventListener('click', returnHome);
+
+    // 鍵盤快捷鍵支援 (1-4 或 A-D)
+    document.addEventListener('keydown', (e) => {
+      if (!state.isPlaying || state.isTransitioning) return;
+
+      const key = e.key.toLowerCase();
+      if (key === '1' || key === 'a') {
+        handleAnswer(0);
+      } else if (key === '2' || key === 'b') {
+        handleAnswer(1);
+      } else if (key === '3' || key === 'c') {
+        handleAnswer(2);
+      } else if (key === '4' || key === 'd') {
+        handleAnswer(3);
+      }
+    });
+  </script>
+</body>
+</html>
